@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.lagou.mapper.CourseCommentDao">
+
+    <resultMap type="com.lagou.entity.CourseComment" id="CourseCommentMap">
+        <result property="id" column="id" jdbcType="VARCHAR"/>
+        <result property="courseId" column="course_id" jdbcType="INTEGER"/>
+        <result property="sectionId" column="section_id" jdbcType="INTEGER"/>
+        <result property="lessonId" column="lesson_id" jdbcType="INTEGER"/>
+        <result property="userId" column="user_id" jdbcType="INTEGER"/>
+        <result property="userName" column="user_name" jdbcType="VARCHAR"/>
+        <result property="parentId" column="parent_id" jdbcType="INTEGER"/>
+        <result property="isTop" column="is_top" jdbcType="INTEGER"/>
+        <result property="comment" column="comment" jdbcType="VARCHAR"/>
+        <result property="likeCount" column="like_count" jdbcType="INTEGER"/>
+        <result property="isReply" column="is_reply" jdbcType="INTEGER"/>
+        <result property="type" column="type" jdbcType="INTEGER"/>
+        <result property="status" column="status" jdbcType="INTEGER"/>
+        <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
+        <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
+        <result property="isDel" column="is_del" jdbcType="INTEGER"/>
+        <result property="lastOperator" column="last_operator" jdbcType="INTEGER"/>
+        <result property="isNotify" column="is_notify" jdbcType="INTEGER"/>
+        <result property="markBelong" column="mark_belong" jdbcType="INTEGER"/>
+        <result property="replied" column="replied" jdbcType="INTEGER"/>
+    </resultMap>
+
+    <insert id="saveComment">
+        insert  into
+            `course_comment`
+            (`course_id`,`section_id`,`lesson_id`,`user_id`,`user_name`,`parent_id`,`is_top`,
+             `comment`,`like_count`,`is_reply`,`type`,`status`,`create_time`,
+             `update_time`,`is_del`,`last_operator`,`is_notify`,`mark_belong`,`replied`)
+        values
+            (#{courseId},#{sectionId},#{lessonId},#{userId},
+             #{userName},#{parentId},0,#{comment},0,0,#{type},
+             0,sysdate(),sysdate(),0,#{lastOperator},1,0,0)
+    </insert>
+
+    <select id="getCommentsByCourseId" resultMap="CourseCommentMap">
+        select * from course_comment
+        where is_del = 0
+          and course_id = #{courseid}
+        order by is_top desc , like_count desc , create_time desc
+        limit #{offset}, #{pageSize}
+    </select>
+
+    <!--查看某个用户的某条留言是否点过赞-->
+    <select id="existsFavorite" resultType="Integer">
+        select count(*) from course_comment_favorite_record where comment_id = #{cid} and user_id = #{uid}
+    </select>
+    <!--没有点过赞，保存点赞信息-->
+    <insert id="saveCommentFavorite">
+        insert  into
+            `course_comment_favorite_record`
+            (user_id,`comment_id`,`is_del`,`create_time`,`update_time`)
+            values
+            (#{uid},#{cid},0,sysdate(),sysdate())
+    </insert>
+
+    <update id="updateFavoriteStatus">
+        update course_comment_favorite_record set is_del = #{status} where comment_id = #{cid} and user_id = #{uid}
+    </update>
+
+    <update id="updateLikeCount">
+        update course_comment set like_count = like_count + #{x} where id = #{comment_id}
+    </update>
+</mapper>
+
